@@ -1,12 +1,12 @@
 <%
-   issues_measure = measure('openIssues')
+   issues_measure = measure('resolvedIssues')
 
    if issues_measure
 %>
   <div class="yui-g">
     <div class="yui-u first">
       <div class="dashbox">
-        <p class="title"><%= message ('widget.polarion.polarion_issues') -%></p>
+        <p class="title"><%= message ('widget.polarion.polarion_resolved_issues') -%></p>
         <span class="big">
           <p>
             <%= format_measure(issues_measure, {:url => issues_measure.url}) -%>
@@ -16,7 +16,7 @@
     </div>
     <div class="yui-u">
       <div class="dashbox">
-        <p class="title"><%= message('widget.polarion.by_severity') -%></p>
+        <p class="title"><%= message('widget.polarion.by_resolution') -%></p>
         <table>
           <%
             issues_measure.text_value.split(";").each do |priority_with_size|

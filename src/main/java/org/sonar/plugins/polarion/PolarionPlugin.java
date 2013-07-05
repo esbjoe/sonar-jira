@@ -26,7 +26,8 @@ import org.sonar.api.Property;
 import org.sonar.api.SonarPlugin;
 import org.sonar.plugins.polarion.metrics.PolarionMetrics;
 import org.sonar.plugins.polarion.metrics.PolarionSensor;
-import org.sonar.plugins.polarion.metrics.PolarionWidget;
+import org.sonar.plugins.polarion.metrics.PolarionUnresolvedIssuesWidget;
+import org.sonar.plugins.polarion.metrics.PolarionResolvedIssuesWidget;
 import org.sonar.plugins.polarion.reviews.PolarionActionDefinition;
 import org.sonar.plugins.polarion.reviews.PolarionIssueCreator;
 import org.sonar.plugins.polarion.reviews.LinkFunction;
@@ -63,7 +64,7 @@ public final class PolarionPlugin extends SonarPlugin {
   public List getExtensions() {
     return ImmutableList.of(
       // metrics part
-      PolarionMetrics.class, PolarionSensor.class, PolarionWidget.class ,
+      PolarionMetrics.class, PolarionSensor.class, PolarionUnresolvedIssuesWidget.class , PolarionResolvedIssuesWidget.class ,
 
       // issues part
       PolarionIssueCreator.class, LinkFunction.class, PolarionActionDefinition.class

@@ -25,9 +25,9 @@ import org.sonar.api.web.RubyRailsWidget;
 import org.sonar.api.web.WidgetCategory;
 
 @WidgetCategory({"Polarion"})
-public final class PolarionWidget extends AbstractRubyTemplate implements RubyRailsWidget {
+public final class PolarionUnresolvedIssuesWidget extends AbstractRubyTemplate implements RubyRailsWidget {
   public String getId() {
-    return "polarion";
+    return "polarionUnresolvedIssues";
   }
 
   public String getTitle() {
@@ -36,6 +36,6 @@ public final class PolarionWidget extends AbstractRubyTemplate implements RubyRa
 
   @Override
   protected String getTemplatePath() {
-    return "/org/sonar/plugins/polarion/metrics/polarionWidget.html.erb";
+    return "/org/sonar/plugins/polarion/metrics/polarionUnresolvedIssuesWidget.html.erb";
   }
 }

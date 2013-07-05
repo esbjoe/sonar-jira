@@ -28,14 +28,14 @@ public class PolarionWidgetTest {
 
   @Test
   public void testGetTemplatePath() {
-    String path = new PolarionWidget().getTemplatePath();
+    String path = new PolarionUnresolvedIssuesWidget().getTemplatePath();
     assertThat(getClass().getResource(path)).isNotNull();
   }
 
   @Test
   public void testNameAndTitle() throws Exception {
-    PolarionWidget widget = new PolarionWidget();
-    assertThat(widget.getId()).isEqualTo("polarion");
+    PolarionUnresolvedIssuesWidget widget = new PolarionUnresolvedIssuesWidget();
+    assertThat(widget.getId()).isEqualTo("polarionUnresolvedIssues");
     assertThat(widget.getTitle()).isEqualTo("Polarion Unresolved Issues");
   }
 }

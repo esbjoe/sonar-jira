@@ -18,17 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
 
-package org.sonar.plugins.polarion;
+package org.sonar.plugins.polarion.metrics;
 
-import org.junit.Test;
+import org.sonar.api.web.AbstractRubyTemplate;
+import org.sonar.api.web.RubyRailsWidget;
+import org.sonar.api.web.WidgetCategory;
 
-import static org.fest.assertions.Assertions.assertThat;
-
-public class PolarionPluginTest {
-  @Test
-  public void testGetExtensions() throws Exception {
-    assertThat(new PolarionPlugin().getExtensions().size()).isEqualTo(7);
+@WidgetCategory({"Polarion"})
+public final class PolarionResolvedIssuesWidget extends AbstractRubyTemplate implements RubyRailsWidget {
+  public String getId() {
+    return "polarionResolvedIssues";
   }
 
+  public String getTitle() {
+    return "Polarion Resolved Issues";
+  }
 
+  @Override
+  protected String getTemplatePath() {
+    return "/org/sonar/plugins/polarion/metrics/polarionResolvedIssuesWidget.html.erb";
+  }
 }

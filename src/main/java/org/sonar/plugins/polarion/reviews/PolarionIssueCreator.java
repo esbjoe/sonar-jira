@@ -66,8 +66,8 @@ public class PolarionIssueCreator implements ServerExtension {
       soapSession = new PolarionSession(polarionUrl);
     }
     catch (MalformedURLException e) {
-      LOG.error("The POLARION server URL is not a valid one: " + polarionUrl, e);
-      throw new IllegalStateException("The POLARION server URL is not a valid one: " + polarionUrl, e);
+      LOG.error("The Polarion server URL is not a valid one: " + polarionUrl, e);
+      throw new IllegalStateException("The Polarion server URL is not a valid one: " + polarionUrl, e);
     }
     return soapSession;
   }
@@ -80,7 +80,7 @@ public class PolarionIssueCreator implements ServerExtension {
     try {
       soapSession.connect(userName, password);
     } catch (RemoteException e) {
-      throw new IllegalStateException("Impossible to connect to the POLARION server (" + polarionUrl + ").", e);
+      throw new IllegalStateException("Impossible to connect to the Polarion server (" + polarionUrl + "). Please check provided login credentails", e);
     }
     LOG.info("Connected to Polarion server");
 
@@ -91,7 +91,6 @@ public class PolarionIssueCreator implements ServerExtension {
     String wiUri = trackerService.createWorkItem(issueToBeCreated);
     WorkItem createdDefect = trackerService.getWorkItemByUri(wiUri);
     String defectId = createdDefect.getId();
-    //TODO add check for failure to create defect
     LOG.debug("Successfully created issue {}", defectId);
     return defectId;
   }

@@ -135,7 +135,7 @@ public class PolarionSensor implements Sensor {
       }
     }
 
-    String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "workitems?query=type:defect%20AND%20NOT%20HAS_VALUE:resolution";
+    String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "workitems?query=type:defect%20AND%20HAS_VALUE:resolution";
     LOG.debug("polarion defect url: " + url);
     saveMeasures(PolarionMetrics.RESOLVEDISSUES, context, url, total, distribution.buildData());
   }
