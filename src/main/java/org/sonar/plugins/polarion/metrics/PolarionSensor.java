@@ -108,8 +108,7 @@ public class PolarionSensor implements Sensor {
     } catch (ServiceException e) {
       LOG.error("WebServices not available", e);
     } catch (Exception e) {
-      LOG.error(e.getMessage());
-      e.printStackTrace();
+      LOG.error("General exception: ",e);
     }
   }
 
@@ -119,22 +118,27 @@ public class PolarionSensor implements Sensor {
 }
 
   private void collectAndSaveResolvedPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
-    Map<String, Integer> issuesByResolution = collectIssuesByResolution(service, polarionProjectId);
     Map<String, String> resolutionEnumStates = collectResolutionEnumStates(service);
+    Map<String, Integer> issuesByResolution = collectIssuesByResolution(service, polarionProjectId);
 
     double total = 0;
     PropertiesBuilder<String, Integer> distribution = new PropertiesBuilder<String, Integer>();
-    for (Map.Entry<String, Integer> entry : issuesByResolution.entrySet()) {
-      String issueResolutionId = entry.getKey();
+    for (Map.Entry<String, String> resolutionState : resolutionEnumStates.entrySet()) {
+      String issueResolutionId = resolutionState.getKey();
       try {
-      total += entry.getValue();
-      distribution.add(resolutionEnumStates.get(issueResolutionId), entry.getValue());
-      LOG.debug("Distribution of collected issues: " + distribution);
-      } catch (NullPointerException ex) {
-        LOG.error("Defect has a resolution that is not included in the enum: " + issueResolutionId);
-      }
-    }
+        for(Map.Entry<String, Integer> issuesPerResolution : issuesByResolution.entrySet()) {
+          Integer nrIssues = 0;
 
+          if(issueResolutionId.equals(issuesPerResolution.getKey())) {
+            total += issuesPerResolution.getValue();
+            nrIssues = issuesPerResolution.getValue();
+            distribution.add(resolutionEnumStates.get(issueResolutionId), nrIssues);
+           break;
+          }
+          distribution.add(resolutionEnumStates.get(issueResolutionId), nrIssues);
+        }
+      } catch (NullPointerException ex) {}
+    }
     String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "workitems?query=type:defect%20AND%20HAS_VALUE:resolution";
     LOG.debug("polarion defect url: " + url);
     saveMeasures(PolarionMetrics.RESOLVEDISSUES, context, url, total, distribution.buildData());
@@ -142,19 +146,25 @@ public class PolarionSensor implements Sensor {
 
   private void collectAndSaveOpenPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
     Map<String, Integer> issuesBySeverity = collectIssuesBySeverity(service, polarionProjectId);
-    Map<String, String> severities = collectSeveritiesEnumStates(service);
+    Map<String, String> severitiesEnumStates = collectSeveritiesEnumStates(service);
 
     double total = 0;
     PropertiesBuilder<String, Integer> distribution = new PropertiesBuilder<String, Integer>();
-    for (Map.Entry<String, Integer> entry : issuesBySeverity.entrySet()) {
-      String issueSeverityId = entry.getKey();
+    for (Map.Entry<String, String> severityEnumState : severitiesEnumStates.entrySet()) {
+      String issueResolutionId = severityEnumState.getKey();
       try {
-      total += entry.getValue();
-      distribution.add(severities.get(issueSeverityId), entry.getValue());
-      LOG.debug("Distribution of collected issues: " + distribution);
-      } catch (NullPointerException ex) {
-        LOG.error("Defect has a severity that is not included in the enum: " + issueSeverityId);
-      }
+        for(Map.Entry<String, Integer> issuesPerSeverity : issuesBySeverity.entrySet()) {
+          Integer nrIssues = 0;
+
+          if(issueResolutionId.equals(issuesPerSeverity.getKey())) {
+            total += issuesPerSeverity.getValue();
+            nrIssues = issuesPerSeverity.getValue();
+            distribution.add(severitiesEnumStates.get(issueResolutionId), nrIssues);
+           break;
+          }
+          distribution.add(severitiesEnumStates.get(issueResolutionId), nrIssues);
+        }
+      } catch (NullPointerException ex) {}
     }
 
     String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "/workitems?query=type:defect%20AND%20NOT%20HAS_VALUE:resolution";
