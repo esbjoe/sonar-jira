@@ -25,10 +25,10 @@ import org.junit.Test;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class PolarionPluginTest {
-/*  @Test
+  @Test
   public void testGetExtensions() throws Exception {
     assertThat(new PolarionPlugin().getExtensions().size()).isEqualTo(6);
   }
 
-  */
+
 }

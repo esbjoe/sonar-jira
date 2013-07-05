@@ -19,22 +19,18 @@
  */
 package org.sonar.plugins.polarion.reviews;
 
-import com.polarion.alm.ws.client.types.tracker.WorkItem;
-
 import com.google.common.annotations.VisibleForTesting;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
 import org.sonar.api.issue.action.Function;
 import org.sonar.plugins.polarion.PolarionConstants;
 
-import java.rmi.RemoteException;
-
 public class LinkFunction implements Function, ServerExtension {
 
-  private final PolarionIssueCreator PolarionIssueCreator;
+  private final PolarionIssueCreator polarionIssueCreator;
 
-  public LinkFunction(PolarionIssueCreator jiraIssueCreator) {
-    this.PolarionIssueCreator = jiraIssueCreator;
+  public LinkFunction(PolarionIssueCreator polarionIssueCreator) {
+    this.polarionIssueCreator = polarionIssueCreator;
   }
 
   public void execute(Context context) {
@@ -43,51 +39,43 @@ public class LinkFunction implements Function, ServerExtension {
   }
 
   protected void createPolarionIssue(Context context){
-    WorkItem issue;
+    String issue;
     try {
-      issue = PolarionIssueCreator.createIssue(context.issue(), context.projectSettings());
+      issue = polarionIssueCreator.createIssue(context.issue(), context.projectSettings());
     } catch (Exception e) {
       throw new IllegalStateException("Impossible to create an issue on Polarion. A problem occured with the remote server: " + e.getMessage(), e);
     }
 
     createComment(issue, context);
     // and add the property
-    context.setAttribute(PolarionConstants.SONAR_ISSUE_DATA_PROPERTY_KEY, issue.getId());
+    context.setAttribute(PolarionConstants.SONAR_ISSUE_DATA_PROPERTY_KEY, issue);
   }
 
   @VisibleForTesting
   void checkConditions(Settings settings) {
     checkProperty(PolarionConstants.SERVER_URL_PROPERTY, settings);
-//    checkProperty(PolarionConstants.SOAP_BASE_URL_PROPERTY, settings);
     checkProperty(PolarionConstants.POLARION_USERNAME_PROPERTY, settings);
     checkProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY, settings);
-/*    checkProperty(PolarionConstants.POLARION_PROJECT_KEY_PROPERTY, settings);
-    checkProperty(PolarionConstants.POLARION_INFO_PRIORITY_ID, settings);
-    checkProperty(PolarionConstants.POLARION_MINOR_PRIORITY_ID, settings);
-    checkProperty(PolarionConstants.POLARION_MAJOR_PRIORITY_ID, settings);
-    checkProperty(PolarionConstants.POLARION_CRITICAL_PRIORITY_ID, settings);
-    checkProperty(PolarionConstants.POLARION_BLOCKER_PRIORITY_ID, settings);
-    checkProperty(PolarionConstants.POLARION_ISSUE_TYPE_ID, settings);
-    checkProperty(PolarionConstants.POLARION_ISSUE_COMPONENT_ID, settings);
-*/  }
+    }
 
-  private void checkProperty(String property, Settings settings) { //TODO
+  private void checkProperty(String property, Settings settings) {
     if (!settings.hasKey(property) && !settings.hasDefaultValue(property)) {
       throw new IllegalStateException("The Polarion property \""+ property + "\" must be defined before you can use the \"Link to Polarion\" button");
     }
   }
 
-  protected void createComment(WorkItem issue, Context context) {
+  protected void createComment(String issue, Context context) {
     context.addComment(generateCommentText(issue, context));
   }
 
-  protected String generateCommentText(WorkItem issue, Context context) {
+  protected String generateCommentText(String issue, Context context) {
     StringBuilder message = new StringBuilder();
     message.append("Issue linked to Polarion issue: ");
     message.append(context.projectSettings().getString(PolarionConstants.SERVER_URL_PROPERTY));
-    message.append("/browse/");
-    message.append(issue.getId());
+    message.append("/polarion/#/project/");
+    message.append(context.projectSettings().getString(PolarionConstants.POLARION_PROJECT_ID));
+    message.append("/workitem?id=");
+    message.append(issue);
     return message.toString();
   }
-
 }

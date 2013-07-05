@@ -36,7 +36,7 @@ public class PolarionWidgetTest {
   public void testNameAndTitle() throws Exception {
     PolarionWidget widget = new PolarionWidget();
     assertThat(widget.getId()).isEqualTo("polarion");
-    assertThat(widget.getTitle()).isEqualTo("Polarion issues");
+    assertThat(widget.getTitle()).isEqualTo("Polarion Unresolved Issues");
   }
 }
 

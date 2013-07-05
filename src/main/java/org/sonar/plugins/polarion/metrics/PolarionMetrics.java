@@ -23,22 +23,33 @@ package org.sonar.plugins.polarion.metrics;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.measures.Metrics;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class PolarionMetrics implements Metrics {
   public static final String ISSUES_DOMAIN = "Issues";
 
-  public static final String ISSUES_KEY = "issues";
-  public static final Metric ISSUES = new Metric.Builder(ISSUES_KEY, "Polarion Issues", Metric.ValueType.INT)
-      .setDescription("Number of Polarion Issues")
+  public static final String OPEN_ISSUES_KEY = "openIssues";
+  public static final Metric OPENISSUES = new Metric.Builder(OPEN_ISSUES_KEY, "Polarion Unresolved Issues", Metric.ValueType.INT)
+      .setDescription("Number of Unresolved Polarion Issues")
+      .setDirection(Metric.DIRECTION_NONE)
+      .setQualitative(false)
+      .setDomain(ISSUES_DOMAIN)
+      .create();
+
+  public static final String RESOLVED_ISSUES_KEY = "resolvedIssues";
+  public static final Metric RESOLVEDISSUES = new Metric.Builder(RESOLVED_ISSUES_KEY, "Polarion Resolved Issues", Metric.ValueType.INT)
+      .setDescription("Number of Resolved Polarion Issues")
       .setDirection(Metric.DIRECTION_NONE)
       .setQualitative(false)
       .setDomain(ISSUES_DOMAIN)
       .create();
 
   public List<Metric> getMetrics() {
-    return Arrays.asList(ISSUES);
+    List<Metric> test = new ArrayList<Metric>();
+    test.add(OPENISSUES);
+    test.add(RESOLVEDISSUES);
+    return test;
   }
 
 }

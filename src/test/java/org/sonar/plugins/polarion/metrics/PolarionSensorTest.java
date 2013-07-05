@@ -20,6 +20,17 @@
 
 package org.sonar.plugins.polarion.metrics;
 
+import com.polarion.alm.ws.client.projects.ProjectWebService;
+
+import com.polarion.alm.ws.client.types.tracker.EnumOptionId;
+
+import com.polarion.alm.ws.client.types.tracker.WorkItem;
+
+import org.hibernate.annotations.Any;
+
+import com.polarion.alm.ws.client.tracker.TrackerWebService;
+import com.polarion.alm.ws.client.types.tracker.EnumOption;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +44,7 @@ import org.sonar.plugins.polarion.soap.PolarionSession;
 
 import java.rmi.RemoteException;
 import java.util.Map;
+import java.lang.String;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
@@ -52,10 +64,10 @@ public class PolarionSensorTest {
   @Before
   public void setUp() {
     settings = new Settings();
-    settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.jira.server");
+    settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.polarion.server");
     settings.setProperty(PolarionConstants.POLARION_USERNAME_PROPERTY, "admin");
     settings.setProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY, "adminPwd");
-    settings.setProperty(PolarionConstants.POLARION_PROJECT_ID, "myFilter");
+    settings.setProperty(PolarionConstants.POLARION_PROJECT_ID, "test");
     sensor = new PolarionSensor(settings);
   }
 
@@ -64,19 +76,19 @@ public class PolarionSensorTest {
     assertThat(sensor.toString()).isEqualTo("Polarion issues sensor");
   }
 
-/*  @Test
+  @Test
   public void testPresenceOfProperties() throws Exception {
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(false);
 
-    settings.removeProperty(PolarionConstants.PASSWORD_PROPERTY);
+    settings.removeProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY);
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
-    settings.removeProperty(PolarionConstants.USERNAME_PROPERTY);
+    settings.removeProperty(PolarionConstants.POLARION_USERNAME_PROPERTY);
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
-    settings.removeProperty(PolarionConstants.POLARION_PROJECT_NAME);
+    settings.removeProperty(PolarionConstants.POLARION_PROJECT_ID);
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
@@ -84,7 +96,7 @@ public class PolarionSensorTest {
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
   }
-*/
+
   @Test
   public void shouldExecuteOnRootProjectWithAllParams() throws Exception {
     Project project = mock(Project.class);
@@ -98,7 +110,7 @@ public class PolarionSensorTest {
     assertThat(sensor.shouldExecuteOnProject(mock(Project.class))).isEqualTo(false);
   }
 
-/*  @Test
+  @Test
   public void shouldNotExecuteOnRootProjectifOneParamMissing() throws Exception {
     Project project = mock(Project.class);
     when(project.isRoot()).thenReturn(true).thenReturn(false);
@@ -108,51 +120,105 @@ public class PolarionSensorTest {
 
     assertThat(sensor.shouldExecuteOnProject(project)).isEqualTo(false);
   }
-*/
+
   @Test
   public void testSaveMeasures() {
     SensorContext context = mock(SensorContext.class);
-    String url = "http://localhost/jira";
+    String url = "http://localhost/polarion";
     String priorityDistribution = "Critical=1";
 
-    sensor.saveMeasures(context, url, 1, priorityDistribution);
+    sensor.saveMeasures(PolarionMetrics.OPENISSUES, context, url, 1, priorityDistribution);
 
-    verify(context).saveMeasure(argThat(new IsMeasure(PolarionMetrics.ISSUES, 1.0, priorityDistribution)));
+    verify(context).saveMeasure(argThat(new IsMeasure(PolarionMetrics.OPENISSUES, 1.0, priorityDistribution)));
     verifyNoMoreInteractions(context);
   }
 
-/*  @Test
-  public void shouldCollectPriorities() throws Exception {
+  @Test
+  public void shouldCollectSeveritiesEnumStates() throws Exception {
     PolarionSession polarionSoapService = mock(PolarionSession.class);
-    RemotePriority priority1 = new RemotePriority();
-    priority1.setId("1");
-    priority1.setName("Minor");
-    when(polarionSoapService.getPriorities("token")).thenReturn(new RemotePriority[] {priority1});
+    TrackerWebService trackerService = mock(TrackerWebService.class);
+    EnumOption severity1 = new EnumOption();
+    severity1.setId("1");
+    severity1.setName("Minor");
+    when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
+    when(trackerService.getEnumOptionsForKeyWithControl("test", "severity", "defect")).thenReturn(new EnumOption[] {severity1});
 
-    Map<String, String> foundPriorities = sensor.collectPriorities(polarionSoapService, "token");
-    assertThat(foundPriorities.size()).isEqualTo(1);
-    assertThat(foundPriorities.get("1")).isEqualTo("Minor");
+    Map<String, String> foundSeverities = sensor.collectSeveritiesEnumStates(polarionSoapService);
+    assertThat(foundSeverities.size()).isEqualTo(1);
+    assertThat(foundSeverities.get("1")).isEqualTo("Minor");
   }
 
-/*  @Test
-  public void shouldCollectIssuesByPriority() throws Exception {
-    RemoteFilter filter = new RemoteFilter();
-    filter.setId("1");
-    JiraSoapService jiraSoapService = mock(JiraSoapService.class);
-    RemoteIssue issue1 = new RemoteIssue();
-    issue1.setPriority("minor");
-    RemoteIssue issue2 = new RemoteIssue();
-    issue2.setPriority("critical");
-    RemoteIssue issue3 = new RemoteIssue();
-    issue3.setPriority("critical");
-    when(jiraSoapService.getIssuesFromFilter("token", "1")).thenReturn(new RemoteIssue[] {issue1, issue2, issue3});
+  @Test
+  public void shouldCollectResolutionEnumStates() throws Exception {
+    PolarionSession polarionSoapService = mock(PolarionSession.class);
+    TrackerWebService trackerService = mock(TrackerWebService.class);
+    EnumOption resolution1 = new EnumOption();
+    resolution1.setId("1");
+    resolution1.setName("Done");
+    when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
+    when(trackerService.getEnumOptionsForKeyWithControl("test", "resolution", "defect")).thenReturn(new EnumOption[] {resolution1});
 
-    Map<String, Integer> foundIssues = sensor.collectIssuesByPriority(jiraSoapService, "token", filter);
+    Map<String, String> foundSeverities = sensor.collectResolutionEnumStates(polarionSoapService);
+    assertThat(foundSeverities.size()).isEqualTo(1);
+    assertThat(foundSeverities.get("1")).isEqualTo("Done");
+  }
+
+  @Test
+  public void shouldCollectOpenIssuesBySeverity() throws Exception {
+    PolarionSession polarionSoapService = mock(PolarionSession.class);
+    TrackerWebService trackerService = mock(TrackerWebService.class);
+    ProjectWebService projectService = mock(ProjectWebService.class);
+    WorkItem issue1 = new WorkItem();
+    issue1.setSeverity(new EnumOptionId("minor"));
+    WorkItem issue2 = new WorkItem();
+    issue2.setSeverity(new EnumOptionId("critical"));
+    WorkItem issue3 = new WorkItem();
+    issue3.setSeverity(new EnumOptionId("critical"));
+
+    com.polarion.alm.ws.client.types.projects.Project project = new com.polarion.alm.ws.client.types.projects.Project();
+    project.setUnresolvable(false);
+
+    when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
+    when(polarionSoapService.getProjectService()).thenReturn(projectService);
+    when(projectService.getProject("test")).thenReturn(new com.polarion.alm.ws.client.types.projects.Project());
+    String[] fields = { "id", "title", "severity", "priority", "status", "resolution"};
+    String query="type:defect AND !resolved AND project.id:test";
+    when(trackerService.queryWorkItems(query, null, fields)).thenReturn(new WorkItem[] {issue1, issue2, issue3});
+
+    Map<String, Integer> foundIssues = sensor.collectIssuesBySeverity(polarionSoapService, settings.getString(PolarionConstants.POLARION_PROJECT_ID));
     assertThat(foundIssues.size()).isEqualTo(2);
     assertThat(foundIssues.get("critical")).isEqualTo(2);
     assertThat(foundIssues.get("minor")).isEqualTo(1);
   }
 
+  @Test
+  public void shouldCollectResolvedIssuesByResolution() throws Exception {
+    PolarionSession polarionSoapService = mock(PolarionSession.class);
+    TrackerWebService trackerService = mock(TrackerWebService.class);
+    ProjectWebService projectService = mock(ProjectWebService.class);
+    WorkItem issue1 = new WorkItem();
+    issue1.setResolution(new EnumOptionId("done"));
+    WorkItem issue2 = new WorkItem();
+    issue2.setResolution(new EnumOptionId("rejected"));
+    WorkItem issue3 = new WorkItem();
+    issue3.setResolution(new EnumOptionId("rejected"));
+
+    com.polarion.alm.ws.client.types.projects.Project project = new com.polarion.alm.ws.client.types.projects.Project();
+    project.setUnresolvable(false);
+
+    when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
+    when(polarionSoapService.getProjectService()).thenReturn(projectService);
+    when(projectService.getProject("test")).thenReturn(new com.polarion.alm.ws.client.types.projects.Project());
+    String[] fields = { "id", "title", "severity", "priority", "status", "resolution"};
+    String query="type:defect AND resolved AND project.id:test";
+    when(trackerService.queryWorkItems(query, null, fields)).thenReturn(new WorkItem[] {issue1, issue2, issue3});
+
+    Map<String, Integer> foundIssues = sensor.collectIssuesByResolution(polarionSoapService, settings.getString(PolarionConstants.POLARION_PROJECT_ID));
+    assertThat(foundIssues.size()).isEqualTo(2);
+    assertThat(foundIssues.get("rejected")).isEqualTo(2);
+    assertThat(foundIssues.get("done")).isEqualTo(1);
+  }
+/*
   @Test
   public void shouldFindFilters() throws Exception {
     JiraSoapService jiraSoapService = mock(JiraSoapService.class);

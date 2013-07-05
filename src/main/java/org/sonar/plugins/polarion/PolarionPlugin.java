@@ -63,10 +63,10 @@ public final class PolarionPlugin extends SonarPlugin {
   public List getExtensions() {
     return ImmutableList.of(
       // metrics part
-      PolarionMetrics.class, PolarionSensor.class, PolarionWidget.class //, TODO activate
+      PolarionMetrics.class, PolarionSensor.class, PolarionWidget.class ,
 
       // issues part
-//      PolarionIssueCreator.class, LinkFunction.class, PolarionActionDefinition.class TODO activate
+      PolarionIssueCreator.class, LinkFunction.class, PolarionActionDefinition.class
     );
   }
 }

@@ -31,7 +31,7 @@ public class PolarionMetricsTest {
   @Test
   public void testGetMetrics() throws Exception {
     List<Metric> metrics = new PolarionMetrics().getMetrics();
-    assertThat(metrics.size()).isEqualTo(1);
+    assertThat(metrics.size()).isEqualTo(2);
     for (Metric metric : metrics) {
       assertThat(metric.getDomain()).isEqualTo(PolarionMetrics.ISSUES_DOMAIN);
     }

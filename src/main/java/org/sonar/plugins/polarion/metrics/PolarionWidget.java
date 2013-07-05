@@ -31,7 +31,7 @@ public final class PolarionWidget extends AbstractRubyTemplate implements RubyRa
   }
 
   public String getTitle() {
-    return "Polarion issues";
+    return "Polarion Unresolved Issues";
   }
 
   @Override

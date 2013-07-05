@@ -7,16 +7,16 @@
   </parent>
 
   <artifactId>sonar-polarion-plugin</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
 
   <name>Sonar Polarion ALM Plugin</name>
-  <description>Connects SonarQube to Atlassian JIRA in various ways.</description>
+  <description>Connects SonarQube to Polarion ALM in various ways.</description>
   <url>http://docs.codehaus.org/display/SONAR/Jira+Plugin</url>
 
   <organization>
     <name>SonarSource</name>
-    <url>http://www.sonarsource.com</url>
+    <url>http://www.sonarsource.org</url>
   </organization>
   <licenses>
     <license>
@@ -67,10 +67,10 @@
   <properties>
     <sonar.pluginClass>org.sonar.plugins.polarion.PolarionPlugin</sonar.pluginClass>
     <sonar.pluginName>Polarion ALM</sonar.pluginName>
-    <sonar.version>3.6-RC2</sonar.version>
+    <sonar.version>3.6</sonar.version>
 
     <!-- Exclude generated classes from Sonar analyzes -->
-    <sonar.exclusions>com/atlassian/**</sonar.exclusions>
+    <sonar.exclusions>com/polarion/**</sonar.exclusions>
   </properties>
 
 <!-- polarion wsclient.jar is put in this local repo -->

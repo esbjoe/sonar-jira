@@ -30,27 +30,7 @@ public final class PolarionConstants {
 
   public static final String SERVER_URL_PROPERTY = "sonar.polarion.url";
   public static final String POLARION_PROJECT_ID = "sonar.polarion.project.id";
-  //public static final String POLARION_USERNAME_PROPERTY = "sonar.polarion.login.secured"; //TODO
-  public static final String POLARION_USERNAME_PROPERTY = "sonar.polarion.login";
-  //public static final String POLARION_PASSWORD_PROPERTY = "sonar.polarion.password.secured"; //TODO
-  public static final String POLARION_PASSWORD_PROPERTY = "sonar.polarion.password";
+  public static final String POLARION_USERNAME_PROPERTY = "sonar.polarion.login.secured";
+  public static final String POLARION_PASSWORD_PROPERTY = "sonar.polarion.password.secured";
 
-
-  //public static final String SOAP_BASE_URL_PROPERTY = "sonar.polarion.soap.url";
-  //public static final String SOAP_BASE_URL_DEF_VALUE = "/rpc/soap/jirasoapservice-v2";
-
-
-  /*public static final String POLARION_PROJECT_KEY_PROPERTY = "sonar.polarion.project.key";
-
-  public static final String POLARION_INFO_PRIORITY_ID = "sonar.polarion.info.priority.id";
-  public static final String POLARION_MINOR_PRIORITY_ID = "sonar.polarion.minor.priority.id";
-  public static final String POLARION_MAJOR_PRIORITY_ID = "sonar.polarion.major.priority.id";
-  public static final String POLARION_CRITICAL_PRIORITY_ID = "sonar.polarion.critical.priority.id";
-  public static final String POLARION_BLOCKER_PRIORITY_ID = "sonar.polarion.blocker.priority.id";
-
-  public static final String POLARION_ISSUE_TYPE_ID = "sonar.polarion.issue.type.id";
-
-  public static final String POLARION_ISSUE_COMPONENT_ID = "sonar.polarion.issue.component.id";
-  public static final String POLARION_ISSUE_COMPONENT_ID_BLANK = "<none>";
-  */
 }
