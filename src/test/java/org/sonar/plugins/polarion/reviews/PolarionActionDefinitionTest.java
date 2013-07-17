@@ -17,7 +17,7 @@
  * License along with Sonar; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-/*package org.sonar.plugins.polarion.reviews;
+package org.sonar.plugins.polarion.reviews;
 
 import org.junit.Test;
 import org.sonar.api.issue.action.Action;
@@ -41,6 +41,5 @@ public class PolarionActionDefinitionTest {
     assertThat(action.functions().get(0)).isEqualTo(function);
     assertThat(action.conditions()).isNotEmpty();
   }
-
 }
-*/
+

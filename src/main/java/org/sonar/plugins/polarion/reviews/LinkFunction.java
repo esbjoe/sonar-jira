@@ -19,11 +19,26 @@
  */
 package org.sonar.plugins.polarion.reviews;
 
+import org.sonar.api.Properties;
+import org.sonar.api.Property;
+
 import com.google.common.annotations.VisibleForTesting;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
 import org.sonar.api.issue.action.Function;
 import org.sonar.plugins.polarion.PolarionConstants;
+
+
+@Properties({
+  @Property(
+    key = PolarionConstants.POLARION_CREATE_PROJECT_ID,
+    name = "Project Create Id",
+    description = "Project ID of Polarion project where defect shall be created when linking SonarQube issue to Polarion. Case sensitive, example : elibrary",
+    global = false,
+    project = true,
+    module = true
+  )
+})
 
 public class LinkFunction implements Function, ServerExtension {
 
@@ -56,6 +71,8 @@ public class LinkFunction implements Function, ServerExtension {
     checkProperty(PolarionConstants.SERVER_URL_PROPERTY, settings);
     checkProperty(PolarionConstants.POLARION_USERNAME_PROPERTY, settings);
     checkProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY, settings);
+    checkProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID, settings);
+    checkProperty(PolarionConstants.POLARION_CREATE_PROJECT_ID, settings);
     }
 
   private void checkProperty(String property, Settings settings) {
@@ -73,7 +90,7 @@ public class LinkFunction implements Function, ServerExtension {
     message.append("Issue linked to Polarion issue: ");
     message.append(context.projectSettings().getString(PolarionConstants.SERVER_URL_PROPERTY));
     message.append("/polarion/#/project/");
-    message.append(context.projectSettings().getString(PolarionConstants.POLARION_PROJECT_ID));
+    message.append(context.projectSettings().getString(PolarionConstants.POLARION_CREATE_PROJECT_ID));
     message.append("/workitem?id=");
     message.append(issue);
     return message.toString();

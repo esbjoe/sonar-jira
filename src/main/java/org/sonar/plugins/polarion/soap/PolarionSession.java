@@ -44,7 +44,6 @@ public class PolarionSession {
   private TrackerWebService trackerService;
   private ProjectWebService projectService;
 
-
   public PolarionSession(String serverAdress) throws MalformedURLException{
       String polarionServices = serverAdress+ "/polarion/ws/services/";
       factory = new WebServiceFactory(polarionServices);

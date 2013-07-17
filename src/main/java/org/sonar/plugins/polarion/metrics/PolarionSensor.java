@@ -52,9 +52,9 @@ import java.util.Map;
 
 @Properties({
   @Property(
-    key = PolarionConstants.POLARION_PROJECT_ID,
-    name = "Project ID",
-    description = "Case sensitive, example : elibrary",
+    key = PolarionConstants.POLARION_FETCH_PROJECT_ID,
+    name = "Project Fetch Id",
+    description = "Project ID of Polarion project where defects shall be fetched from. Case sensitive, example : elibrary",
     global = false,
     project = true,
     module = true
@@ -81,8 +81,8 @@ public class PolarionSensor implements Sensor {
     return  settings.getString(PolarionConstants.POLARION_PASSWORD_PROPERTY);
   }
 
-  private String getProjectId() {
-     return settings.getString(PolarionConstants.POLARION_PROJECT_ID);
+  private String getFetchProjectId() {
+     return settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID);
   }
 
   public boolean shouldExecuteOnProject(Project project) {
@@ -98,7 +98,7 @@ public class PolarionSensor implements Sensor {
 
       session.connect(getUsername(), getPassword());
 
-      runAnalysis(context, session, getProjectId());
+      runAnalysis(context, session, getFetchProjectId());
 
       session.disconnect();
       LOG.info("Disconnected from Polarion server");
@@ -139,7 +139,7 @@ public class PolarionSensor implements Sensor {
         }
       } catch (NullPointerException ex) {}
     }
-    String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "workitems?query=type:defect%20AND%20HAS_VALUE:resolution";
+    String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "/workitems?query=type:defect%20AND%20HAS_VALUE:resolution";
     LOG.debug("polarion defect url: " + url);
     saveMeasures(PolarionMetrics.RESOLVEDISSUES, context, url, total, distribution.buildData());
   }
@@ -246,7 +246,7 @@ public class PolarionSensor implements Sensor {
   protected Map<String, String> collectSeveritiesEnumStates(PolarionSession service) throws RemoteException {
     Map<String, String> severities = Maps.newHashMap();
     TrackerWebService trackerService = service.getTrackerService();
-    EnumOption[] allConfiguredSeverities = trackerService.getEnumOptionsForKeyWithControl(getProjectId()
+    EnumOption[] allConfiguredSeverities = trackerService.getEnumOptionsForKeyWithControl(getFetchProjectId()
         , "severity", "defect");
 
     for ( EnumOption configuredSeverity : allConfiguredSeverities) {
@@ -260,7 +260,7 @@ public class PolarionSensor implements Sensor {
     Map<String, String> resolutions = Maps.newHashMap();
     TrackerWebService trackerService = service.getTrackerService();
 
-    EnumOption[] allConfiguredResolutions = trackerService.getEnumOptionsForKeyWithControl(getProjectId()
+    EnumOption[] allConfiguredResolutions = trackerService.getEnumOptionsForKeyWithControl(getFetchProjectId()
         , "resolution", "defect");
 
     for ( EnumOption configuredResolution : allConfiguredResolutions) {
@@ -272,7 +272,7 @@ public class PolarionSensor implements Sensor {
 
   protected boolean missingMandatoryParameters() {
     return StringUtils.isEmpty(getServerUrl()) ||
-      StringUtils.isEmpty(getProjectId()) ||
+      StringUtils.isEmpty(getFetchProjectId()) ||
       StringUtils.isEmpty(getUsername()) ||
       StringUtils.isEmpty(getPassword());
   }

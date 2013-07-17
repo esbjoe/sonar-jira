@@ -67,7 +67,7 @@ public class PolarionSensorTest {
     settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.polarion.server");
     settings.setProperty(PolarionConstants.POLARION_USERNAME_PROPERTY, "admin");
     settings.setProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY, "adminPwd");
-    settings.setProperty(PolarionConstants.POLARION_PROJECT_ID, "test");
+    settings.setProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID, "test");
     sensor = new PolarionSensor(settings);
   }
 
@@ -88,7 +88,7 @@ public class PolarionSensorTest {
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
-    settings.removeProperty(PolarionConstants.POLARION_PROJECT_ID);
+    settings.removeProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID);
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
@@ -185,7 +185,7 @@ public class PolarionSensorTest {
     String query="type:defect AND !resolved AND project.id:test";
     when(trackerService.queryWorkItems(query, null, fields)).thenReturn(new WorkItem[] {issue1, issue2, issue3});
 
-    Map<String, Integer> foundIssues = sensor.collectIssuesBySeverity(polarionSoapService, settings.getString(PolarionConstants.POLARION_PROJECT_ID));
+    Map<String, Integer> foundIssues = sensor.collectIssuesBySeverity(polarionSoapService, settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID));
     assertThat(foundIssues.size()).isEqualTo(2);
     assertThat(foundIssues.get("critical")).isEqualTo(2);
     assertThat(foundIssues.get("minor")).isEqualTo(1);
@@ -213,7 +213,7 @@ public class PolarionSensorTest {
     String query="type:defect AND resolved AND project.id:test";
     when(trackerService.queryWorkItems(query, null, fields)).thenReturn(new WorkItem[] {issue1, issue2, issue3});
 
-    Map<String, Integer> foundIssues = sensor.collectIssuesByResolution(polarionSoapService, settings.getString(PolarionConstants.POLARION_PROJECT_ID));
+    Map<String, Integer> foundIssues = sensor.collectIssuesByResolution(polarionSoapService, settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID));
     assertThat(foundIssues.size()).isEqualTo(2);
     assertThat(foundIssues.get("rejected")).isEqualTo(2);
     assertThat(foundIssues.get("done")).isEqualTo(1);

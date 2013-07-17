@@ -29,7 +29,8 @@ public final class PolarionConstants {
   // ===================== PLUGIN PROPERTIES =====================
 
   public static final String SERVER_URL_PROPERTY = "sonar.polarion.url";
-  public static final String POLARION_PROJECT_ID = "sonar.polarion.project.id";
+  public static final String POLARION_FETCH_PROJECT_ID = "sonar.polarion.fetch.project.id";
+  public static final String POLARION_CREATE_PROJECT_ID = "sonar.polarion.create.project.id";
   public static final String POLARION_USERNAME_PROPERTY = "sonar.polarion.login.secured";
   public static final String POLARION_PASSWORD_PROPERTY = "sonar.polarion.password.secured";
 

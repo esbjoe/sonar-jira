@@ -89,6 +89,9 @@ public class PolarionIssueCreator implements ServerExtension {
     WorkItem issueToBeCreated = initPolarionIssue(projectService, sonarIssue, settings);
     TrackerWebService trackerService = soapSession.getTrackerService();
     String wiUri = trackerService.createWorkItem(issueToBeCreated);
+    //add sonar comments to polarion workitem
+    createWorkItemComment(sonarIssue, wiUri, trackerService);
+
     WorkItem createdDefect = trackerService.getWorkItemByUri(wiUri);
     String defectId = createdDefect.getId();
     LOG.debug("Successfully created issue {}", defectId);
@@ -97,7 +100,7 @@ public class PolarionIssueCreator implements ServerExtension {
 
   protected WorkItem initPolarionIssue(ProjectWebService projectService, Issue sonarIssue,
       Settings settings) throws RemoteException {
-    String polarionProjectId = settings.getString(PolarionConstants.POLARION_PROJECT_ID);
+    String polarionProjectId = settings.getString(PolarionConstants.POLARION_CREATE_PROJECT_ID);
     WorkItem issue = new WorkItem();
 
     Project polarionProject = projectService.getProject(polarionProjectId);
@@ -110,6 +113,17 @@ public class PolarionIssueCreator implements ServerExtension {
     issue.setTitle(generateIssueSummary(sonarIssue));
     issue.setDescription(generateIssueDescription(sonarIssue, settings));
     return issue;
+  }
+
+  private void createWorkItemComment(Issue sonarIssue, String wiUri,  TrackerWebService trackerService) throws RemoteException{
+    List<IssueComment> issueComments = sonarIssue.comments();
+    for(IssueComment issueComment : issueComments) {
+      Text content = new Text();
+      content.setType("text/plain");
+      content.setContent(issueComment.markdownText());
+      content.setContentLossy(false);
+      trackerService.createCommentNew(wiUri, "SonarQube Review Comment", content, null);
+    }
   }
 
   protected String generateIssueSummary(Issue sonarIssue) {
@@ -127,22 +141,15 @@ public class PolarionIssueCreator implements ServerExtension {
   }
 
   protected Text generateIssueDescription(Issue sonarIssue, Settings settings) {
-    StringBuilder description = new StringBuilder("Issue detail:");
-    description.append(sonarIssue.message());
+    String sonarIssueUrl = settings.getString(CoreProperties.SERVER_BASE_URL) +
+        "/issue/show/" + sonarIssue.key();
 
-    description.append("\n\nComments:");
-    List<IssueComment> issueComments = sonarIssue.comments();
-    for(IssueComment issueComment : issueComments) {
-      description.append("\n" + issueComment.markdownText() +
-          ", Added by: " + issueComment.userLogin() +
-          ", Date: "+ issueComment.createdAt());
-    }
+    StringBuilder description = new StringBuilder();
+    description.append("<p>" + sonarIssue.message() + "</p>");
+    description.append("<br/>");
+    description.append("<p><a href = \"" + sonarIssueUrl + "\" target=\"_blank\">Check issue on Sonar</a>");
 
-    description.append("\n\nCheck it on Sonar: ");
-    description.append(settings.getString(CoreProperties.SERVER_BASE_URL));
-    description.append("/issue/show/");
-    description.append(sonarIssue.key());
-    return new Text("text/plain", description.toString(), false);
+    return new Text("text/html", description.toString(), false);
   }
 }
 

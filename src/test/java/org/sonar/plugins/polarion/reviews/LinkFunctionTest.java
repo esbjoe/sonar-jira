@@ -17,9 +17,8 @@
  * License along with Sonar; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-/*package org.sonar.plugins.polarion.reviews;
+package org.sonar.plugins.polarion.reviews;
 
-//import com.atlassian.jira.rpc.soap.client.RemoteIssue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,12 +40,11 @@ public class LinkFunctionTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
   private LinkFunction function;
-  private PolarionIssueCreator jiraIssueCreator;
+  private PolarionIssueCreator polarionIssueCreator;
   private Issue sonarIssue;
   private Function.Context context;
-//  private RemoteIssue remoteIssue;
   private Settings settings;
-/*
+
   @Before
   public void init() throws Exception {
     sonarIssue = new DefaultIssue().setKey("ABCD");
@@ -56,64 +54,56 @@ public class LinkFunctionTest {
     when(context.issue()).thenReturn(sonarIssue);
     when(context.projectSettings()).thenReturn(settings);
 
-    jiraIssueCreator = mock(JiraIssueCreator.class);
-//    remoteIssue = new RemoteIssue();
-//    remoteIssue.setKey("FOO-15");
-///    when(jiraIssueCreator.createIssue(sonarIssue, settings)).thenReturn(remoteIssue);
+    polarionIssueCreator = mock(PolarionIssueCreator.class);
 
-    function = new LinkFunction(jiraIssueCreator);
+    function = new LinkFunction(polarionIssueCreator);
   }
 
   @Test
   public void should_execute() throws Exception {
-    function.createJiraIssue(context);
+    function.createPolarionIssue(context);
 
-//    verify(jiraIssueCreator).createIssue(sonarIssue, settings);
+    verify(polarionIssueCreator).createIssue(sonarIssue, settings);
     verify(context).addComment(anyString());
-    verify(context).setAttribute(JiraConstants.SONAR_ISSUE_DATA_PROPERTY_KEY, "FOO-15");
   }
 
   @Test
   public void should_fail_execute_if_remote_problem() throws Exception {
-//    when(jiraIssueCreator.createIssue(sonarIssue, settings)).thenThrow(new RemoteException("Server Error"));
+    when(polarionIssueCreator.createIssue(sonarIssue, settings)).thenThrow(new RemoteException("Server Error"));
 
     thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Impossible to create an issue on JIRA. A problem occured with the remote server: Server Error");
+    thrown.expectMessage("Impossible to create an issue on Polarion. A problem occured with the remote server: Server Error");
 
-    function.createJiraIssue(context);
+    function.createPolarionIssue(context);
   }
 
   @Test
   public void test_create_comment() throws Exception {
-    settings.setProperty(JiraConstants.SERVER_URL_PROPERTY, "http://my.jira.server");
+    settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.polarion.server");
 
-//    function.createComment(remoteIssue, context);
+    function.createComment("FOO-15", context);
 
-    verify(context).addComment("Issue linked to JIRA issue: http://my.jira.server/browse/FOO-15");
+    verify(context).addComment(
+        "Issue linked to Polarion issue: http://my.polarion.server/polarion/#/project/" +
+            settings.getString(PolarionConstants.POLARION_CREATE_PROJECT_ID) + "/workitem?id=FOO-15");
   }
 
-  @Test
+    @Test
   public void test_generate_comment_text() throws Exception {
-    settings.setProperty(JiraConstants.SERVER_URL_PROPERTY, "http://my.jira.server");
+    settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.polarion.server");
 
-//    String commentText = function.generateCommentText(remoteIssue, context);
-//    assertThat(commentText).isEqualTo("Issue linked to JIRA issue: http://my.jira.server/browse/FOO-15");
+    String commentText = function.generateCommentText("FOO-15", context);
+    assertThat(commentText).isEqualTo("Issue linked to Polarion issue: http://my.polarion.server/polarion/#/project/" +
+        settings.getString(PolarionConstants.POLARION_CREATE_PROJECT_ID) + "/workitem?id=FOO-15");
   }
 
   @Test
   public void should_check_settings() {
-    settings.setProperty(JiraConstants.SERVER_URL_PROPERTY, "http://my.jira.server");
-    settings.setProperty(JiraConstants.SOAP_BASE_URL_PROPERTY, "/rpc/soap/jirasoapservice-v2");
-    settings.setProperty(JiraConstants.USERNAME_PROPERTY, "john");
-    settings.setProperty(JiraConstants.PASSWORD_PROPERTY, "1234");
-    settings.setProperty(JiraConstants.JIRA_PROJECT_KEY_PROPERTY, "SONAR");
-    settings.setProperty(JiraConstants.JIRA_INFO_PRIORITY_ID, 5);
-    settings.setProperty(JiraConstants.JIRA_MINOR_PRIORITY_ID, 4);
-    settings.setProperty(JiraConstants.JIRA_MAJOR_PRIORITY_ID, 3);
-    settings.setProperty(JiraConstants.JIRA_CRITICAL_PRIORITY_ID, 2);
-    settings.setProperty(JiraConstants.JIRA_BLOCKER_PRIORITY_ID, 1);
-    settings.setProperty(JiraConstants.JIRA_ISSUE_TYPE_ID, 3);
-    settings.setProperty(JiraConstants.JIRA_ISSUE_COMPONENT_ID, 18);
+    settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.polarion.server");
+    settings.setProperty(PolarionConstants.POLARION_USERNAME_PROPERTY, "john");
+    settings.setProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY, "1234");
+    settings.setProperty(PolarionConstants.POLARION_CREATE_PROJECT_ID, "SONAR");
+    settings.setProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID, "SONAR2");
 
     function.checkConditions(settings);
   }
@@ -126,6 +116,5 @@ public class LinkFunctionTest {
       assertThat(e).isInstanceOf(IllegalStateException.class);
     }
   }
-
 }
-*/
+
