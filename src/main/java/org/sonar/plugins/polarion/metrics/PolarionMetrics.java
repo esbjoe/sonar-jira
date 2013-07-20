@@ -46,10 +46,10 @@ public final class PolarionMetrics implements Metrics {
       .create();
 
   public List<Metric> getMetrics() {
-    List<Metric> test = new ArrayList<Metric>();
-    test.add(OPENISSUES);
-    test.add(RESOLVEDISSUES);
-    return test;
+    List<Metric> metrics = new ArrayList<Metric>();
+    metrics.add(OPENISSUES);
+    metrics.add(RESOLVEDISSUES);
+    return metrics;
   }
 
 }

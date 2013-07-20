@@ -8,7 +8,7 @@
     <tr>
       <td valign="top" width="50%">
         <div class="dashbox">
-        <p class="title"><%= message ('widget.polarion.polarion_resolved_issues') -%></p>
+        <p class="title"><%= message ('widget.polarion.resolved.issues') -%></p>
           <p>
             <span class="big">
               <%= format_measure(issues, {:url => issues.url}) -%>
@@ -19,7 +19,7 @@
       </td>
       <td valign="top" width="50%">
         <div class="dashbox">
-        <p class="title"><%= message('widget.polarion.by_resolution') -%></p>
+        <p class="title"><%= message('widget.polarion.resolved.by_resolution') -%></p>
           <p>
           <table>
           <%
@@ -37,8 +37,8 @@
                 <%= priority_with_size_array[1] -%>
               </td>
             </tr>
-			<% end %>
-			</table>            
+           <% end %>
+          </table>
           </p>
         </div>
       </td>

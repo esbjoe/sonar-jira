@@ -87,7 +87,7 @@ public class PolarionSensor implements Sensor {
 
   public boolean shouldExecuteOnProject(Project project) {
     if (missingMandatoryParameters()) {
-      LOG.error("Polarion issues sensor will not run due to some parameters are missing.");
+      LOG.warn("Polarion issues sensor will not run due to some parameters are missing.");
     }
     return project.isRoot() && !missingMandatoryParameters();
   }
