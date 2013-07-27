@@ -67,7 +67,8 @@ public class PolarionSensorTest {
     settings.setProperty(PolarionConstants.SERVER_URL_PROPERTY, "http://my.polarion.server");
     settings.setProperty(PolarionConstants.POLARION_USERNAME_PROPERTY, "admin");
     settings.setProperty(PolarionConstants.POLARION_PASSWORD_PROPERTY, "adminPwd");
-    settings.setProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID, "test");
+    settings.setProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID, "test1");
+    settings.setProperty(PolarionConstants.POLARION_CREATE_PROJECT_ID, "test2");
     sensor = new PolarionSensor(settings);
   }
 
@@ -89,6 +90,10 @@ public class PolarionSensorTest {
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
     settings.removeProperty(PolarionConstants.POLARION_FETCH_PROJECT_ID);
+    sensor = new PolarionSensor(settings);
+    assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
+
+    settings.removeProperty(PolarionConstants.POLARION_CREATE_PROJECT_ID);
     sensor = new PolarionSensor(settings);
     assertThat(sensor.missingMandatoryParameters()).isEqualTo(true);
 
@@ -218,20 +223,16 @@ public class PolarionSensorTest {
     assertThat(foundIssues.get("rejected")).isEqualTo(2);
     assertThat(foundIssues.get("done")).isEqualTo(1);
   }
-/*
+
   @Test
   public void shouldFindFilters() throws Exception {
-    JiraSoapService jiraSoapService = mock(JiraSoapService.class);
-    RemoteFilter filter1 = new RemoteFilter();
-    filter1.setName("fooFilter");
-    RemoteFilter myFilter = new RemoteFilter();
-    myFilter.setName("myFilter");
-    when(jiraSoapService.getFavouriteFilters("token")).thenReturn(new RemoteFilter[] {filter1, myFilter});
+    PolarionSession service = mock(PolarionSession.class);
+    SensorContext context = mock(SensorContext.class);
+    String polarionProjectId="test";
+    sensor.collectAndSaveResolvedPolarionIssues(context, service, polarionProjectId);
 
-    RemoteFilter foundFilter = sensor.findJiraFilter(jiraSoapService, "token");
-    assertThat(foundFilter).isEqualTo(myFilter);
   }
-
+/*
   @Test
   public void shouldFindFiltersWithPreviousJiraVersions() throws Exception {
     JiraSoapService jiraSoapService = mock(JiraSoapService.class);

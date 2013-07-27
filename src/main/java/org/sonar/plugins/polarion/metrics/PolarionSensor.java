@@ -85,6 +85,10 @@ public class PolarionSensor implements Sensor {
      return settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID);
   }
 
+  private String getCreateProjectId() {
+    return settings.getString(PolarionConstants.POLARION_CREATE_PROJECT_ID);
+ }
+
   public boolean shouldExecuteOnProject(Project project) {
     if (missingMandatoryParameters()) {
       LOG.warn("Polarion issues sensor will not run due to some parameters are missing.");
@@ -117,7 +121,7 @@ public class PolarionSensor implements Sensor {
   collectAndSaveResolvedPolarionIssues(context, service, polarionProjectId);
 }
 
-  private void collectAndSaveResolvedPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
+  protected void collectAndSaveResolvedPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
     Map<String, String> resolutionEnumStates = collectResolutionEnumStates(service);
     Map<String, Integer> issuesByResolution = collectIssuesByResolution(service, polarionProjectId);
 
@@ -144,7 +148,7 @@ public class PolarionSensor implements Sensor {
     saveMeasures(PolarionMetrics.RESOLVEDISSUES, context, url, total, distribution.buildData());
   }
 
-  private void collectAndSaveOpenPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
+  protected void collectAndSaveOpenPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
     Map<String, Integer> issuesBySeverity = collectIssuesBySeverity(service, polarionProjectId);
     Map<String, String> severitiesEnumStates = collectSeveritiesEnumStates(service);
 
@@ -210,7 +214,7 @@ public class PolarionSensor implements Sensor {
     return issuesByResolution;
   }
 
-  private WorkItem[] getDefectsForProject(String query, PolarionSession service, String polarionProjectId) throws RemoteException {
+  protected WorkItem[] getDefectsForProject(String query, PolarionSession service, String polarionProjectId) throws RemoteException {
 
     ProjectWebService projectService = service.getProjectService();
     com.polarion.alm.ws.client.types.projects.Project polarionProject;
@@ -231,14 +235,16 @@ public class PolarionSensor implements Sensor {
     return defects;
   }
 
-  private WorkItem[] queryPolarionForWorkItem(PolarionSession service, String polarionProjectId, String query, String[] fields) throws RemoteException {
+  protected WorkItem[] queryPolarionForWorkItem(PolarionSession service, String polarionProjectId, String query, String[] fields) throws RemoteException {
     TrackerWebService trackerService = service.getTrackerService();
     WorkItem[] defects = null;
+    LOG.info("Retreive Workitems from project: " + polarionProjectId);
+    LOG.debug("Query: " + query);
     try {
       defects = trackerService.queryWorkItems(query, null, fields);
-      LOG.debug("Number of defects found in " + polarionProjectId + ": " + defects.length);
+      LOG.info("Number of workitems found in " + polarionProjectId + ": " + defects.length);
     } catch (NullPointerException ex) {
-      LOG.debug("Number of defects found in " + polarionProjectId + ": 0");
+      LOG.info("Number of workitems found in " + polarionProjectId + ": 0");
     }
     return defects;
   }
@@ -273,6 +279,7 @@ public class PolarionSensor implements Sensor {
   protected boolean missingMandatoryParameters() {
     return StringUtils.isEmpty(getServerUrl()) ||
       StringUtils.isEmpty(getFetchProjectId()) ||
+      StringUtils.isEmpty(getCreateProjectId()) ||
       StringUtils.isEmpty(getUsername()) ||
       StringUtils.isEmpty(getPassword());
   }
