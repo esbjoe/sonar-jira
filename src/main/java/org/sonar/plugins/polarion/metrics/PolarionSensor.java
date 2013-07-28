@@ -117,100 +117,92 @@ public class PolarionSensor implements Sensor {
   }
 
   protected void runAnalysis(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
-  collectAndSaveOpenPolarionIssues(context, service, polarionProjectId);
-  collectAndSaveResolvedPolarionIssues(context, service, polarionProjectId);
-}
-
-  protected void collectAndSaveResolvedPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
-    Map<String, String> resolutionEnumStates = collectResolutionEnumStates(service);
-    Map<String, Integer> issuesByResolution = collectIssuesByResolution(service, polarionProjectId);
-
-    double total = 0;
-    PropertiesBuilder<String, Integer> distribution = new PropertiesBuilder<String, Integer>();
-    for (Map.Entry<String, String> resolutionState : resolutionEnumStates.entrySet()) {
-      String issueResolutionId = resolutionState.getKey();
-      try {
-        for(Map.Entry<String, Integer> issuesPerResolution : issuesByResolution.entrySet()) {
-          Integer nrIssues = 0;
-
-          if(issueResolutionId.equals(issuesPerResolution.getKey())) {
-            total += issuesPerResolution.getValue();
-            nrIssues = issuesPerResolution.getValue();
-            distribution.add(resolutionEnumStates.get(issueResolutionId), nrIssues);
-           break;
-          }
-          distribution.add(resolutionEnumStates.get(issueResolutionId), nrIssues);
-        }
-      } catch (NullPointerException ex) {}
-    }
-    String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "/workitems?query=type:defect%20AND%20HAS_VALUE:resolution";
-    LOG.debug("polarion defect url: " + url);
-    saveMeasures(PolarionMetrics.RESOLVEDISSUES, context, url, total, distribution.buildData());
+    collectAndSaveOpenPolarionDefects(context, service, polarionProjectId);
+    collectAndSaveResolvedPolarionDefects(context, service, polarionProjectId);
   }
 
-  protected void collectAndSaveOpenPolarionIssues(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
-    Map<String, Integer> issuesBySeverity = collectIssuesBySeverity(service, polarionProjectId);
+  protected void collectAndSaveOpenPolarionDefects(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
+    Map<String, Integer> issuesWithSeverity = collectDefectsBySeverity(service, polarionProjectId);
     Map<String, String> severitiesEnumStates = collectSeveritiesEnumStates(service);
 
-    double total = 0;
-    PropertiesBuilder<String, Integer> distribution = new PropertiesBuilder<String, Integer>();
-    for (Map.Entry<String, String> severityEnumState : severitiesEnumStates.entrySet()) {
-      String issueResolutionId = severityEnumState.getKey();
-      try {
-        for(Map.Entry<String, Integer> issuesPerSeverity : issuesBySeverity.entrySet()) {
-          Integer nrIssues = 0;
-
-          if(issueResolutionId.equals(issuesPerSeverity.getKey())) {
-            total += issuesPerSeverity.getValue();
-            nrIssues = issuesPerSeverity.getValue();
-            distribution.add(severitiesEnumStates.get(issueResolutionId), nrIssues);
-           break;
-          }
-          distribution.add(severitiesEnumStates.get(issueResolutionId), nrIssues);
-        }
-      } catch (NullPointerException ex) {}
-    }
+    DefectPerEnumState defectsPerSeverity = mapNumberOfDefectsPerEnumState(severitiesEnumStates, issuesWithSeverity);
 
     String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "/workitems?query=type:defect%20AND%20NOT%20HAS_VALUE:resolution";
     LOG.debug("polarion defect url: " + url);
-    saveMeasures(PolarionMetrics.OPENISSUES, context, url, total, distribution.buildData());
+    saveMeasures(PolarionMetrics.OPENISSUES, context, url, defectsPerSeverity.totalNumberOfDefects, defectsPerSeverity.distribution.buildData());
   }
 
-  protected Map<String, Integer> collectIssuesBySeverity(PolarionSession service, String polarionProjectId) throws RemoteException {
+  protected void collectAndSaveResolvedPolarionDefects(SensorContext context, PolarionSession service, String polarionProjectId) throws RemoteException {
+    Map<String, String> resolutionEnumStates = collectResolutionEnumStates(service);
+    Map<String, Integer> defectsWithResolution = collectDefectsByResolution(service, polarionProjectId);
+
+    DefectPerEnumState defectsPerResolution = mapNumberOfDefectsPerEnumState(resolutionEnumStates, defectsWithResolution);
+
+    String url = getServerUrl() + "/polarion/#/project/" + polarionProjectId + "/workitems?query=type:defect%20AND%20HAS_VALUE:resolution";
+    LOG.debug("polarion defect url: " + url);
+    saveMeasures(PolarionMetrics.RESOLVEDISSUES, context, url, defectsPerResolution.totalNumberOfDefects, defectsPerResolution.distribution.buildData());
+  }
+
+  protected DefectPerEnumState mapNumberOfDefectsPerEnumState(Map<String, String> enumStates, Map<String, Integer> defectsPerEnumStates) {
+    DefectPerEnumState defectPerEnumState = new DefectPerEnumState();
+    for (Map.Entry<String, String> enumState : enumStates.entrySet()) {
+      String enumStateId = enumState.getKey();
+
+      if(defectsPerEnumStates.isEmpty()) {
+        defectPerEnumState.addNumberOfDefectsForCurrentEnumState(enumStates.get(
+            enumStateId), 0);
+      }
+
+      for(Map.Entry<String, Integer> defectsForAnEnumState : defectsPerEnumStates.entrySet()) {
+        Integer nrIssues = 0;
+
+        if(enumStateId.equals(defectsForAnEnumState.getKey())) {
+          defectPerEnumState.totalNumberOfDefects += defectsForAnEnumState.getValue();
+          nrIssues = defectsForAnEnumState.getValue();
+          defectPerEnumState.addNumberOfDefectsForCurrentEnumState(
+              enumStates.get(enumStateId), nrIssues);
+         break;
+        }
+        defectPerEnumState.addNumberOfDefectsForCurrentEnumState(enumStates.get(
+            enumStateId), nrIssues);
+      }
+    }
+    return defectPerEnumState;
+  }
+
+  protected Map<String, Integer> collectDefectsBySeverity(PolarionSession service, String polarionProjectId) throws RemoteException {
   Map<String, Integer> issuesBySeverity = Maps.newHashMap();
 
   String query="type:defect AND !resolved AND project.id:" + polarionProjectId;
   WorkItem[] defects = getDefectsForProject(query, service, polarionProjectId);
 
-  if(defects != null) {
-    for (WorkItem defect : defects) {
-      String severity = defect.getSeverity().getId();
-      if (!issuesBySeverity.containsKey(severity)) {
-        issuesBySeverity.put(severity, 1);
-      } else {
-        issuesBySeverity.put(severity, issuesBySeverity.get(severity) + 1);
-      }
+  for (WorkItem defect : defects) {
+    String severity = defect.getSeverity().getId();
+    if (!issuesBySeverity.containsKey(severity)) {
+      issuesBySeverity.put(severity, 1);
+    } else {
+      issuesBySeverity.put(severity, issuesBySeverity.get(severity) + 1);
     }
   }
+
   return issuesBySeverity;
 }
 
-  protected Map<String, Integer> collectIssuesByResolution(PolarionSession service, String polarionProjectId) throws RemoteException {
+  protected Map<String, Integer> collectDefectsByResolution(PolarionSession service, String polarionProjectId) throws RemoteException {
     Map<String, Integer> issuesByResolution = Maps.newHashMap();
 
     String query="type:defect AND resolved AND project.id:" + polarionProjectId;
     WorkItem[] defects = getDefectsForProject(query, service, polarionProjectId);
 
-    if(defects != null) {
-      for (WorkItem defect : defects) {
-        String resolution = defect.getResolution().getId();
-        if (!issuesByResolution.containsKey(resolution)) {
-          issuesByResolution.put(resolution, 1);
-        } else {
-          issuesByResolution.put(resolution, issuesByResolution.get(resolution) + 1);
-        }
+    for (WorkItem defect : defects) {
+      String resolution = defect.getResolution().getId();
+      if (!issuesByResolution.containsKey(resolution)) {
+        issuesByResolution.put(resolution, 1);
+      } else {
+        issuesByResolution.put(resolution, issuesByResolution.get(resolution) + 1);
       }
     }
+
     return issuesByResolution;
   }
 
@@ -237,15 +229,19 @@ public class PolarionSensor implements Sensor {
 
   protected WorkItem[] queryPolarionForWorkItem(PolarionSession service, String polarionProjectId, String query, String[] fields) throws RemoteException {
     TrackerWebService trackerService = service.getTrackerService();
-    WorkItem[] defects = null;
+
     LOG.info("Retreive Workitems from project: " + polarionProjectId);
     LOG.debug("Query: " + query);
-    try {
-      defects = trackerService.queryWorkItems(query, null, fields);
-      LOG.info("Number of workitems found in " + polarionProjectId + ": " + defects.length);
-    } catch (NullPointerException ex) {
-      LOG.info("Number of workitems found in " + polarionProjectId + ": 0");
+    WorkItem[] defects = trackerService.queryWorkItems(query, null, fields);
+
+    if(defects == null) {
+      defects = new WorkItem[0];
+      LOG.warn("No Polarion defects was found for query: " + query);
     }
+    else {
+      LOG.info("Number of workitems found in " + polarionProjectId + ": " + defects.length);
+    }
+
     return defects;
   }
 
@@ -277,11 +273,12 @@ public class PolarionSensor implements Sensor {
   }
 
   protected boolean missingMandatoryParameters() {
-    return StringUtils.isEmpty(getServerUrl()) ||
-      StringUtils.isEmpty(getFetchProjectId()) ||
-      StringUtils.isEmpty(getCreateProjectId()) ||
-      StringUtils.isEmpty(getUsername()) ||
-      StringUtils.isEmpty(getPassword());
+    boolean isEmpty = StringUtils.isEmpty(getServerUrl()) ||
+        StringUtils.isEmpty(getFetchProjectId()) ||
+        StringUtils.isEmpty(getCreateProjectId()) ||
+        StringUtils.isEmpty(getUsername()) ||
+        StringUtils.isEmpty(getPassword());
+    return isEmpty;
   }
 
   protected void saveMeasures(Metric metric, SensorContext context, String issueUrl, double totalPrioritiesCount, String priorityDistribution) {
@@ -298,4 +295,26 @@ public class PolarionSensor implements Sensor {
   public String toString() {
     return "Polarion issues sensor";
   }
+
+  public class DefectPerEnumState {
+    private double totalNumberOfDefects = 0;
+    private PropertiesBuilder<String, Integer> distribution = new PropertiesBuilder<String, Integer>();
+
+    public double getTotalNumberOfDefects() {
+      return totalNumberOfDefects;
+    }
+
+    public void setTotalNumberOfDefects(double totalNumberOfDefects) {
+      this.totalNumberOfDefects= totalNumberOfDefects;
+    }
+
+    public PropertiesBuilder<String, Integer> getDistribution() {
+      return distribution;
+    }
+
+    public void addNumberOfDefectsForCurrentEnumState(String enumState, Integer numberOfIssues) {
+      distribution.add(enumState, numberOfIssues);
+    }
+  }
+
 }

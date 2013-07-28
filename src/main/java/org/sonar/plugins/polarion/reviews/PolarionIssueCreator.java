@@ -19,6 +19,8 @@
  */
 package org.sonar.plugins.polarion.reviews;
 
+import javax.xml.rpc.ServiceException;
+
 import org.sonar.api.issue.IssueComment;
 
 import com.polarion.alm.ws.client.types.Text;
@@ -53,7 +55,7 @@ public class PolarionIssueCreator implements ServerExtension {
     this.ruleFinder = ruleFinder;
   }
 
-  public String createIssue(Issue sonarIssue, Settings settings) throws RemoteException, Exception {
+  public String createIssue(Issue sonarIssue, Settings settings) throws RemoteException {
     PolarionSession soapSession = createSoapSession(settings);
     return doCreateIssue(sonarIssue, soapSession, settings);
   }
@@ -72,7 +74,7 @@ public class PolarionIssueCreator implements ServerExtension {
     return soapSession;
   }
 
-  protected String doCreateIssue(Issue sonarIssue, PolarionSession soapSession, Settings settings) throws Exception{
+  protected String doCreateIssue(Issue sonarIssue, PolarionSession soapSession, Settings settings) throws RemoteException{
       // Connect to Polarion ALM
     String userName = settings.getString(PolarionConstants.POLARION_USERNAME_PROPERTY);
     String password = settings.getString(PolarionConstants.POLARION_PASSWORD_PROPERTY);
@@ -80,6 +82,8 @@ public class PolarionIssueCreator implements ServerExtension {
     try {
       soapSession.connect(userName, password);
     } catch (RemoteException e) {
+      throw new IllegalStateException("Impossible to connect to the Polarion server (" + polarionUrl + "). Please check provided login credentails", e);
+    } catch (ServiceException e) {
       throw new IllegalStateException("Impossible to connect to the Polarion server (" + polarionUrl + "). Please check provided login credentails", e);
     }
     LOG.info("Connected to Polarion server");
@@ -95,6 +99,8 @@ public class PolarionIssueCreator implements ServerExtension {
     WorkItem createdDefect = trackerService.getWorkItemByUri(wiUri);
     String defectId = createdDefect.getId();
     LOG.debug("Successfully created issue {}", defectId);
+
+    soapSession.disconnect();
     return defectId;
   }
 

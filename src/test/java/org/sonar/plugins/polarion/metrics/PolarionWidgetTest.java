@@ -26,14 +26,27 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class PolarionWidgetTest {
 
-/*  @Test
-  public void testGetTemplatePath() {
+  @Test
+  public void testGetTemplatePathResolvedWidget() {
+    String path = new PolarionResolvedIssuesWidget().getTemplatePath();
+    assertThat(getClass().getResource(path)).isNotNull();
+  }
+
+  @Test
+  public void testGetTemplatePathUnresolvedWidget() {
     String path = new PolarionUnresolvedIssuesWidget().getTemplatePath();
     assertThat(getClass().getResource(path)).isNotNull();
   }
-*/
+
   @Test
-  public void testNameAndTitle() throws Exception {
+  public void testNameAndTitleResolvedWidget() throws Exception {
+    PolarionResolvedIssuesWidget widget = new PolarionResolvedIssuesWidget();
+    assertThat(widget.getId()).isEqualTo("polarionResolvedIssues");
+    assertThat(widget.getTitle()).isEqualTo("Polarion Resolved Issues");
+  }
+
+  @Test
+  public void testNameAndTitleUnResolvedWidget() throws Exception {
     PolarionUnresolvedIssuesWidget widget = new PolarionUnresolvedIssuesWidget();
     assertThat(widget.getId()).isEqualTo("polarionUnresolvedIssues");
     assertThat(widget.getTitle()).isEqualTo("Polarion Unresolved Issues");

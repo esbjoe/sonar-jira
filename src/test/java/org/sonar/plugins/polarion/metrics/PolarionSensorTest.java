@@ -20,13 +20,15 @@
 
 package org.sonar.plugins.polarion.metrics;
 
+import org.sonar.plugins.polarion.metrics.PolarionSensor.DefectPerEnumState;
+
+import com.google.common.collect.Maps;
+
 import com.polarion.alm.ws.client.projects.ProjectWebService;
 
 import com.polarion.alm.ws.client.types.tracker.EnumOptionId;
 
 import com.polarion.alm.ws.client.types.tracker.WorkItem;
-
-import org.hibernate.annotations.Any;
 
 import com.polarion.alm.ws.client.tracker.TrackerWebService;
 import com.polarion.alm.ws.client.types.tracker.EnumOption;
@@ -45,6 +47,8 @@ import org.sonar.plugins.polarion.soap.PolarionSession;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.lang.String;
+
+import static org.mockito.Matchers.anyString;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
@@ -146,7 +150,7 @@ public class PolarionSensorTest {
     severity1.setId("1");
     severity1.setName("Minor");
     when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
-    when(trackerService.getEnumOptionsForKeyWithControl("test", "severity", "defect")).thenReturn(new EnumOption[] {severity1});
+    when(trackerService.getEnumOptionsForKeyWithControl(anyString(), anyString(), anyString())).thenReturn(new EnumOption[] {severity1});
 
     Map<String, String> foundSeverities = sensor.collectSeveritiesEnumStates(polarionSoapService);
     assertThat(foundSeverities.size()).isEqualTo(1);
@@ -161,7 +165,7 @@ public class PolarionSensorTest {
     resolution1.setId("1");
     resolution1.setName("Done");
     when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
-    when(trackerService.getEnumOptionsForKeyWithControl("test", "resolution", "defect")).thenReturn(new EnumOption[] {resolution1});
+    when(trackerService.getEnumOptionsForKeyWithControl(anyString(), anyString(), anyString())).thenReturn(new EnumOption[] {resolution1});
 
     Map<String, String> foundSeverities = sensor.collectResolutionEnumStates(polarionSoapService);
     assertThat(foundSeverities.size()).isEqualTo(1);
@@ -185,12 +189,12 @@ public class PolarionSensorTest {
 
     when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
     when(polarionSoapService.getProjectService()).thenReturn(projectService);
-    when(projectService.getProject("test")).thenReturn(new com.polarion.alm.ws.client.types.projects.Project());
+    when(projectService.getProject(anyString())).thenReturn(new com.polarion.alm.ws.client.types.projects.Project());
     String[] fields = { "id", "title", "severity", "priority", "status", "resolution"};
-    String query="type:defect AND !resolved AND project.id:test";
+    String query="type:defect AND !resolved AND project.id:" + settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID);
     when(trackerService.queryWorkItems(query, null, fields)).thenReturn(new WorkItem[] {issue1, issue2, issue3});
 
-    Map<String, Integer> foundIssues = sensor.collectIssuesBySeverity(polarionSoapService, settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID));
+    Map<String, Integer> foundIssues = sensor.collectDefectsBySeverity(polarionSoapService, settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID));
     assertThat(foundIssues.size()).isEqualTo(2);
     assertThat(foundIssues.get("critical")).isEqualTo(2);
     assertThat(foundIssues.get("minor")).isEqualTo(1);
@@ -213,47 +217,96 @@ public class PolarionSensorTest {
 
     when(polarionSoapService.getTrackerService()).thenReturn(trackerService);
     when(polarionSoapService.getProjectService()).thenReturn(projectService);
-    when(projectService.getProject("test")).thenReturn(new com.polarion.alm.ws.client.types.projects.Project());
+    when(projectService.getProject(anyString())).thenReturn(new com.polarion.alm.ws.client.types.projects.Project());
     String[] fields = { "id", "title", "severity", "priority", "status", "resolution"};
-    String query="type:defect AND resolved AND project.id:test";
+    String query="type:defect AND resolved AND project.id:" + settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID);
     when(trackerService.queryWorkItems(query, null, fields)).thenReturn(new WorkItem[] {issue1, issue2, issue3});
 
-    Map<String, Integer> foundIssues = sensor.collectIssuesByResolution(polarionSoapService, settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID));
+    Map<String, Integer> foundIssues = sensor.collectDefectsByResolution(polarionSoapService, settings.getString(PolarionConstants.POLARION_FETCH_PROJECT_ID));
     assertThat(foundIssues.size()).isEqualTo(2);
     assertThat(foundIssues.get("rejected")).isEqualTo(2);
     assertThat(foundIssues.get("done")).isEqualTo(1);
   }
 
   @Test
-  public void shouldFindFilters() throws Exception {
+  public void distributionForEmptyEnumStateShouldBeZero() throws Exception {
+    Map<String, String> enumStates = Maps.newHashMap();
+    enumStates.put("state1", "STATE 1");
+    enumStates.put("state2", "STATE 2");
+    enumStates.put("state3", "STATE 3");
+
+    Map<String, Integer> defectsPerEnumStates = Maps.newHashMap();
+
+    DefectPerEnumState defectPerEnumState = sensor.mapNumberOfDefectsPerEnumState(enumStates, defectsPerEnumStates);
+
+    assertThat(defectPerEnumState.getDistribution().getProps().get("STATE 1")).isEqualTo(0);
+    assertThat(defectPerEnumState.getDistribution().getProps().get("STATE 2")).isEqualTo(0);
+    assertThat(defectPerEnumState.getDistribution().getProps().get("STATE 3")).isEqualTo(0);
+
+  }
+
+  @Test
+  public void totalNumberOfDefectShallBeSet() throws Exception {
+    Map<String, String> enumStates = Maps.newHashMap();
+    enumStates.put("state1", "STATE 1");
+    enumStates.put("state2", "STATE 2");
+    enumStates.put("state3", "STATE 3");
+
+    Map<String, Integer> defectsPerEnumStates = Maps.newHashMap();
+    defectsPerEnumStates.put("state2", 10);
+    defectsPerEnumStates.put("state3", 5);
+    DefectPerEnumState defectPerEnumState = sensor.mapNumberOfDefectsPerEnumState(enumStates, defectsPerEnumStates);
+
+    assertThat(defectPerEnumState.getTotalNumberOfDefects()).isEqualTo(15);
+  }
+
+  @Test
+  public void nrOfDefectsPerEnumStateShallBeSet() throws Exception {
+    Map<String, String> enumStates = Maps.newHashMap();
+    enumStates.put("state1", "STATE 1");
+    enumStates.put("state2", "STATE 2");
+    enumStates.put("state3", "STATE 3");
+
+    Map<String, Integer> defectsPerEnumStates = Maps.newHashMap();
+    defectsPerEnumStates.put("state2", 10);
+    defectsPerEnumStates.put("state3", 5);
+    DefectPerEnumState defectPerEnumState = sensor.mapNumberOfDefectsPerEnumState(enumStates, defectsPerEnumStates);
+
+    assertThat(defectPerEnumState.getDistribution().getProps().get("STATE 1")).isEqualTo(0);
+    assertThat(defectPerEnumState.getDistribution().getProps().get("STATE 2")).isEqualTo(10);
+    assertThat(defectPerEnumState.getDistribution().getProps().get("STATE 3")).isEqualTo(5);
+  }
+
+  @Test(expected=IllegalArgumentException.class)
+  public void shallThrowIllegalArugemtExceptionIfPolarionProjectIsUnresolvable() throws RemoteException {
     PolarionSession service = mock(PolarionSession.class);
-    SensorContext context = mock(SensorContext.class);
-    String polarionProjectId="test";
-    sensor.collectAndSaveResolvedPolarionIssues(context, service, polarionProjectId);
+    ProjectWebService projectService = mock(ProjectWebService.class);
+    when(service.getProjectService()).thenReturn(projectService);
 
-  }
-/*
-  @Test
-  public void shouldFindFiltersWithPreviousJiraVersions() throws Exception {
-    JiraSoapService jiraSoapService = mock(JiraSoapService.class);
-    RemoteFilter myFilter = new RemoteFilter();
-    myFilter.setName("myFilter");
-    when(jiraSoapService.getSavedFilters("token")).thenReturn(new RemoteFilter[] {myFilter});
-    when(jiraSoapService.getFavouriteFilters("token")).thenThrow(RemoteException.class);
+    com.polarion.alm.ws.client.types.projects.Project polarionProject = new com.polarion.alm.ws.client.types.projects.Project();
+    polarionProject.setUnresolvable(true);
 
-    RemoteFilter foundFilter = sensor.findJiraFilter(jiraSoapService, "token");
-    assertThat(foundFilter).isEqualTo(myFilter);
+    when(projectService.getProject(anyString())).thenReturn(polarionProject);
+    String polarionProjectId = "test";
+    String query = "testQuery";
+    sensor.getDefectsForProject(query, service, polarionProjectId);
   }
 
   @Test
-  public void faillIfNoFilterFound() throws Exception {
-    JiraSoapService jiraSoapService = mock(JiraSoapService.class);
-    when(jiraSoapService.getFavouriteFilters("token")).thenReturn(new RemoteFilter[0]);
+  public void queryPolarionForWorkItemShallReturnEmptyArrayIfNoDefectsIsFound() throws RemoteException {
+    PolarionSession service = mock(PolarionSession.class);
+    TrackerWebService trackerService = mock(TrackerWebService.class);
+    when(service.getTrackerService()).thenReturn(trackerService);
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Unable to find filter 'myFilter' in JIRA");
+    String[] fields = { "id", "title"};
+    String query = "testQuery";
+    when(trackerService.queryWorkItems(query, null, fields)).thenReturn(null);
 
-    sensor.findJiraFilter(jiraSoapService, "token");
+    String polarionProjectId = "test";
+
+
+    WorkItem[] workitems = sensor.queryPolarionForWorkItem(service, polarionProjectId, query, fields);
+
+    assertThat(workitems).isEqualTo(new WorkItem[0]);
   }
-*/
 }
