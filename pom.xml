@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>sonar-polarion-plugin</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.9-sonarQube-4.0</version>
   <packaging>sonar-plugin</packaging>
 
   <name>Sonar Polarion ALM Plugin</name>
@@ -67,7 +67,7 @@
   <properties>
     <sonar.pluginClass>org.sonar.plugins.polarion.PolarionPlugin</sonar.pluginClass>
     <sonar.pluginName>Polarion ALM</sonar.pluginName>
-    <sonar.version>3.6</sonar.version>
+    <sonar.version>4.0</sonar.version>
 
     <!-- Exclude generated classes from Sonar analyzes -->
     <sonar.exclusions>com/polarion/**</sonar.exclusions>
@@ -77,7 +77,7 @@
  <repositories>
   <repository>
     <id>my-local-repo</id>
-    <url>file://${basedir}/my-repo</url>
+    <url>file://${basedir}\my-repo</url>
   </repository>
 </repositories>
  <dependencies>
